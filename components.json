@@ -1,0 +1,22 @@
+{
+  "school": "Africa Online University",
+  "purpose": "Local development baseline; production acceptance is pending",
+  "components": {
+    "moodle": {
+      "path": "sources/moodle",
+      "fork": "https://github.com/elias0247/neuronet.moodle.git",
+      "source": "https://github.com/moodle/moodle.git",
+      "version": "5.2.3",
+      "commit": "344232c15336c71b80f9aca8359ce0e0a9f3d116"
+    },
+    "rosariosis": {
+      "path": "sources/rosariosis",
+      "fork": "https://github.com/elias0247/neuronet.rosariosis.git",
+      "source": "https://github.com/elias0247/neuronet.rosariosis.git",
+      "version": "13.0",
+      "commit": "5ece843bb8b4589b8568cb0da1929ff03da7e433"
+    }
+  },
+  "platform_name": "Africa Online University Platform",
+  "short_name": "AOU"
+}

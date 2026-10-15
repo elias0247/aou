@@ -1,0 +1,28 @@
+# Application checkouts retain their own Git repositories.
+/sources/moodle/
+/sources/rosariosis/
+/sources/*-incomplete/
+
+# Local secrets and environment settings.
+.env
+.env.*
+!.env.example
+!.env.*.example
+/secrets/
+*.key
+*.pem
+
+# Runtime state and backups. Do not ignore SQL migrations globally.
+/data/
+/backups/
+/postgres-data/
+/moodledata/
+/rosariodata/
+*.dump
+*.log
+
+# Local tools and editor state.
+/.agents/
+/.codex/
+.DS_Store
+*.swp

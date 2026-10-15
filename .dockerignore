@@ -1,0 +1,14 @@
+**
+!docker/
+!docker/**
+!sources/
+!sources/moodle/
+!sources/moodle/**
+!sources/rosariosis/
+!sources/rosariosis/**
+**/.git
+**/node_modules
+**/.env
+**/.env.*
+sources/moodle/config.php
+sources/rosariosis/config.inc.php

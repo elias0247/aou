@@ -1,0 +1,112 @@
+# Laptop-only environment. See docs/local-development.md before using.
+name: aou-dev
+
+services:
+  db:
+    image: postgres:16-alpine@sha256:e013e867e712fec275706a6c51c966f0bb0c93cfa8f51000f85a15f9865a28cb
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run python3 scripts/init-env.py}
+      MOODLE_DB_PASSWORD: ${MOODLE_DB_PASSWORD:?Run python3 scripts/init-env.py}
+      ROSARIO_DB_PASSWORD: ${ROSARIO_DB_PASSWORD:?Run python3 scripts/init-env.py}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/01-databases.sh:/docker-entrypoint-initdb.d/01-databases.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    mem_limit: 512m
+    networks: [backend]
+
+  moodle:
+    image: aou/moodle:5.2.3-dev
+    build:
+      context: .
+      dockerfile: docker/moodle/Dockerfile
+    environment: &moodle-environment
+      MOODLE_DB_PASSWORD: ${MOODLE_DB_PASSWORD:?Run python3 scripts/init-env.py}
+      MOODLE_URL: http://learn.aou.test:8080
+      TZ: Africa/Addis_Ababa
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - moodledata:/var/www/moodledata
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, --output, /dev/null, "http://127.0.0.1:8080/aou-health.php"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+    mem_limit: 1g
+    networks:
+      backend:
+        aliases: [learn.aou.test]
+
+  rosariosis:
+    image: aou/rosariosis:13.0-dev
+    build:
+      context: .
+      dockerfile: docker/rosariosis/Dockerfile
+    environment:
+      ROSARIO_DB_PASSWORD: ${ROSARIO_DB_PASSWORD:?Run python3 scripts/init-env.py}
+      ROSARIO_URL: http://sis.aou.test:8081/
+      TZ: Africa/Addis_Ababa
+    ports:
+      - "127.0.0.1:8081:8081"
+    volumes:
+      - rosario-files:/var/www/html/assets/FileUploads
+      - rosario-students:/var/www/html/assets/StudentPhotos
+      - rosario-users:/var/www/html/assets/UserPhotos
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, --output, /dev/null, "http://127.0.0.1:8081/aou-health.php"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+    mem_limit: 768m
+    networks:
+      backend:
+        aliases: [sis.aou.test]
+
+  moodle-cron:
+    image: aou/moodle:5.2.3-dev
+    profiles: [tasks]
+    user: www-data
+    entrypoint: [/bin/sh, /opt/aou/cron.sh]
+    environment: *moodle-environment
+    volumes:
+      - moodledata:/var/www/moodledata
+    depends_on:
+      db:
+        condition: service_healthy
+      moodle:
+        condition: service_healthy
+    mem_limit: 512m
+    networks: [backend]
+
+networks:
+  backend:
+
+volumes:
+  postgres-data:
+    external: ${AOU_VOLUMES_EXTERNAL:-false}
+    name: ${AOU_VOLUME_PREFIX:-aou-dev}_postgres-data
+  moodledata:
+    external: ${AOU_VOLUMES_EXTERNAL:-false}
+    name: ${AOU_VOLUME_PREFIX:-aou-dev}_moodledata
+  rosario-files:
+    external: ${AOU_VOLUMES_EXTERNAL:-false}
+    name: ${AOU_VOLUME_PREFIX:-aou-dev}_rosario-files
+  rosario-students:
+    external: ${AOU_VOLUMES_EXTERNAL:-false}
+    name: ${AOU_VOLUME_PREFIX:-aou-dev}_rosario-students
+  rosario-users:
+    external: ${AOU_VOLUMES_EXTERNAL:-false}
+    name: ${AOU_VOLUME_PREFIX:-aou-dev}_rosario-users
